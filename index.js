@@ -34,7 +34,7 @@ app.listen(
 );
 
 app.get("/", (req, res) => {
-    var word = words[816]; //Math.floor(Math.random() * words.length)];
+    var word = words[Math.floor(Math.random() * words.length)];
     return res.render("index.ejs", { hash: word.hash });
 });
 
