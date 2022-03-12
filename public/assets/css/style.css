@@ -2,7 +2,7 @@
 
 :root {
     --main-color: rgb(18, 18, 19);
-    --shadow: rgb(16, 15, 17);
+    --shadow: rgba(16, 15, 17, 0.5);
     --keyboard-color: rgb(129, 131, 132);
     --keyboard-pressed-color: rgb(87, 87, 87);
     --text-color: rgb(243, 255, 255);
@@ -33,17 +33,24 @@ body {
     overflow: hidden;
 }
 
-#game {
+#title {
+    margin: 25px auto 0;
+    text-align: center;
+    color: var(--text-color);
+}
+
+#reOpenResults {
     position: absolute;
-    top: 0;
-    right: 0;
-    bottom: 0;
-    left: 0;
-    margin: 0;
-    padding: 0;
-    width: 100%;
-    height: 100%;
-    filter: brightness(1);
+    top: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: var(--text-color);
+    text-decoration: underline;
+    width: 150px;
+    text-align: center;
+    margin: auto;
+    cursor: pointer;
+    z-index: 101;
 }
 
 #results {
@@ -52,15 +59,15 @@ body {
     top: 40%;
     left: 50%;
     transform: translate(-50%, -40%);
-    padding: 5px;
+    padding: 10px 5px;
     display: flex;
     flex-direction: column;
     justify-content: center;
     gap: 25px;
     width: 500px;
-    height: 250px;
+    min-height: 250px;
     background-color: var(--main-color);
-    box-shadow: var(--shadow) 15px 15px;
+    box-shadow: var(--shadow) 10px 15px;
     border: 1px solid var(--keyboard-pressed-color);
     color: var(--text-color);
     border-radius: 5px;
@@ -85,6 +92,7 @@ body {
     margin: 0 auto;
     width: 400px;
     text-align: center;
+    font-size: 18pt;
 }
 
 #results #newWord {
@@ -126,14 +134,22 @@ body {
     z-index: 98;
 }
 
-#title {
-    margin: 25px auto;
-    text-align: center;
-    color: var(--text-color);
+#game {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    filter: brightness(1);
 }
 
 #guesses {
     margin: calc(var(--tile-size) * 2) auto;
+    max-width: 60%;
     display: flex;
     flex-direction: column;
     justify-content: center;

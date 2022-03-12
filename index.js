@@ -34,7 +34,7 @@ app.listen(
 );
 
 app.get("/", (req, res) => {
-    var word = words[Math.floor(Math.random() * words.length)];
+    var word = words[816]; //Math.floor(Math.random() * words.length)];
     return res.render("index.ejs", { hash: word.hash });
 });
 
@@ -79,7 +79,7 @@ app.post("/compareword", (req, res) => {
     for (var i in letters) {
         if (answer.word.split("")[i] === letters[i]) match.push("correct");
         else if (answer.word.includes(letters[i])) {
-            if (answer.word.match(new RegExp(letters[i], "g")).length === 1 && req.body.word.match(new RegExp(letters[i], "g")).length > 1 && letters.slice(0, i).join("").includes(letters[i])) {
+            if (answer.word.match(new RegExp(letters[i], "g")).length === 1 && req.body.word.match(new RegExp(letters[i], "g")).length > 1 && (letters.slice(0, i).join("").includes(letters[i]) || letters.slice(i, letters.length - 1).forEach(letter => letter === letters[i]))) {
                 match.push("absent");
             } else match.push("present");
         } else match.push("absent");

@@ -39,16 +39,16 @@ function handleKeyDown(e) {
     if (e.ctrlKey || e.key === "Control" || e.key === "ControlRight" || e.altKey || e.key === "Alt" || e.key === "AltRight") return false;
     if (flipping) return false;
     if (pressing && (e.keyCode === 13 || e.keyCode === 8)) return;
-    pressing = true;
     if ("abcdefghijklmnopqrstuvwxyz".includes(e.key) || e.keyCode === 13 || e.keyCode === 8) document.querySelector("#keyboard .row button[data-key=" + e.key.toLowerCase() + "]").classList.add("pressed");
     pressed(e.key.toLowerCase());
+    pressing = true;
 }
 
 function handleKeyUp(e) {
     if (e.ctrlKey || e.key === "Control" || e.key === "ControlRight" || e.altKey || e.key === "Alt" || e.key === "AltRight") return false;
-    if (flipping) return false;
-    pressing = false;
+    if (flipping && e.keyCode != 13) return false;
     if ("abcdefghijklmnopqrstuvwxyz".includes(e.key) || e.keyCode === 13 || e.keyCode === 8) document.querySelector("#keyboard .row button[data-key=" + e.key.toLowerCase() + "]").classList.remove("pressed");
+    pressing = false;
 }
 
 function submitWord(guess) {
@@ -95,7 +95,7 @@ function submitWord(guess) {
                     if (res.data.found) {
                         setTimeout(function() {
                             showResults("won");
-                        }, 1250);
+                        }, 250);
                     } else {
                         if (currentGuess >= 6) {
                             showResults("lost");
@@ -123,7 +123,7 @@ function animateTile(tile, animation, duration) {
 }
 
 function flipTiles(tiles, match) {
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
         flipTile(tiles[0], match[0]).then(() => {
             flipTile(tiles[1], match[1]).then(() => {
                 flipTile(tiles[2], match[2]).then(() => {
@@ -139,7 +139,7 @@ function flipTiles(tiles, match) {
 }
 
 function flipTile(tile, value) {
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
         setTimeout(function() {
             tile.classList.add("flip-in");
             setTimeout(function() {
@@ -196,15 +196,16 @@ function setUpKeyboard() {
                     key.innerHTML = "enter";
                     key.setAttribute("data-key", "enter");
                 } else if (keyList[rows].split("")[letter] === "<") {
-                    key.innerHTML = "<svg xmlns=\"http://www.w3.org/2000/svg\" height=\"24\" viewBox=\"0 0 24 24\" width=\"24\"> <path fill=\"var(--text-color)\" d=\"M22 3H7c-.69 0-1.23.35-1.59.88L0 12l5.41 8.11c.36.53.9.89 1.59.89h15c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H7.07L2.4 12l4.66-7H22v14zm-11.59-2L14 13.41 17.59 17 19 15.59 15.41 12 19 8.41 17.59 7 14 10.59 10.41 7 9 8.41 12.59 12 9 15.59z\"></path> </svg>";
+                    key.innerHTML = "<svg xmlns=\"http://www.w3.org/2000/svg\" height=\"24\" viewBox=\"0 0 24 24\" width=\"24\" style=\"transform: translate(-1.5px, 0.5px);\"> <path fill=\"var(--text-color)\" d=\"M22 3H7c-.69 0-1.23.35-1.59.88L0 12l5.41 8.11c.36.53.9.89 1.59.89h15c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H7.07L2.4 12l4.66-7H22v14zm-11.59-2L14 13.41 17.59 17 19 15.59 15.41 12 19 8.41 17.59 7 14 10.59 10.41 7 9 8.41 12.59 12 9 15.59z\"></path> </svg>";
                     key.setAttribute("data-key", "backspace");
                 }
             } else {
                 key.classList.add("key");
                 key.innerHTML = keyList[rows].split("")[letter];
-                key.setAttribute("onclick", "pressed(this.dataset.key)");
                 key.setAttribute("data-key", keyList[rows].split("")[letter]);
             }
+
+            key.setAttribute("onclick", "pressed(this.dataset.key)");
 
             row.appendChild(key);
         }
@@ -214,13 +215,13 @@ function setUpKeyboard() {
 }
 
 function showMessage(message) {
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
         if (document.querySelectorAll("div.error").length >= 2) resolve();
         var error = document.createElement("div");
         error.classList.add("error");
         error.innerHTML = message;
         if (document.querySelectorAll("div.error").length === 1) error.style.top = "130px";
-        document.querySelector("#body").insertBefore(error, document.querySelector("#title"));
+        document.querySelector("#game").insertBefore(error, document.querySelector("#title"));
         setTimeout(function() {
             fade(error);
             resolve();
@@ -229,9 +230,11 @@ function showMessage(message) {
 }
 
 function showResults(status) {
+    var results = document.querySelector("#stats");
+
     switch (status) {
         case "won":
-            document.querySelector("#status").innerHTML = "You found the word in " + currentGuess + (currentGuess != 1 ? " guesses!" : " guess!");
+            results.innerHTML = "You found the word in " + currentGuess + (currentGuess != 1 ? " guesses!" : " guess!");
             showMessage(winMessages[Math.floor(Math.random() * winMessages.length)]).then(() => {
                 document.querySelector("#results").style.visibility = "visible";
                 document.querySelector("#game").style.filter = "brightness(0.5)";
@@ -249,7 +252,26 @@ function showResults(status) {
                 }
             }).then(body => body.json().then(res => {
                 if (res.status === "error") return alert(res.error);
-                document.querySelector("#status").innerHTML = "The word was \"" + res.data.word.toUpperCase() + "\"";
+                var rows = document.querySelectorAll("#guesses .row");
+                var bestGuess = 0;
+                var foundLetters = {};
+                var letters = res.data.word.split("");
+                letters.forEach(letter => {
+                    foundLetters[letter] = false;
+                });
+                for (var row in rows) {
+                    if (!isNaN(row)) {
+                        if (document.querySelectorAll("#guess" + (parseInt(row) + 1) + " .tile.correct").length > bestGuess) bestGuess = document.querySelectorAll("#guess" + (parseInt(row) + 1) + " .tile.correct").length;
+                        for (var tile in document.querySelector("#guess" + (parseInt(row) + 1)).children) {
+                            if (document.querySelector("#guess" + (parseInt(row) + 1)).children[tile] != undefined && document.querySelector("#guess" + (parseInt(row) + 1)).children[tile] instanceof HTMLElement) {
+                                if (document.querySelector("#guess" + (parseInt(row) + 1)).children[tile].classList.contains("correct") || document.querySelector("#guess" + (parseInt(row) + 1)).children[tile].classList.contains("present")) {
+                                    if (!foundLetters[document.querySelector("#guess" + (parseInt(row) + 1)).children[tile].innerHTML.toLowerCase()]) foundLetters[document.querySelector("#guess" + (parseInt(row) + 1)).children[tile].innerHTML.toLowerCase()] = true;
+                                }
+                            }
+                        }
+                    }
+                }
+                results.innerHTML = "The word was \"<b>" + res.data.word.toUpperCase() + "</b>\"<br /><p style='margin: auto; text-align: center; width: 150px; font-size: 15pt;'>You found:<br />" + Object.keys(foundLetters).filter(key => foundLetters[key] === true).length + "/5 letters<br />" + bestGuess + "/5 tiles</p>";
                 showMessage(res.data.word.toUpperCase()).then(() => {
                     document.querySelector("#results").style.visibility = "visible";
                     document.querySelector("#game").style.filter = "brightness(0.5)";
@@ -259,12 +281,16 @@ function showResults(status) {
         default:
             break;
     }
-
 }
 
 function closeResults() {
     document.querySelector("#results").style.visibility = "hidden";
     document.querySelector("#game").style.filter = "brightness(1)";
+    var reOpen = document.createElement("p");
+    reOpen.id = "reOpenResults";
+    reOpen.innerHTML = "Show results";
+    reOpen.setAttribute("onclick", "document.querySelector('#results').style.visibility = 'visible';document.querySelector('#game').style.filter = 'brightness(0.5)';");
+    document.querySelector("#game").insertBefore(reOpen, document.querySelector("#guesses"));
 }
 
 function fade(element) {
